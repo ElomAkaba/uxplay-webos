@@ -10,7 +10,8 @@ the top bar. Opening that item shows the panel; while it is open, disable the
 Home screen's key handlers. Exclude `AIRPLAY_ID` from app discovery so the
 backend does not appear as an app tile.
 
-The receiver name in the panel is Lumen TV, matching the default bundle name.
+The panel accepts a `receiverName` prop, defaulting to Lumen TV. Match it to the
+name in the backend launcher.conf file.
 If a bundle uses a different receiver name, update the panel text as well.
 Use the existing glass panel style and a full-width Start button. Native
 receiver setup and lifecycle limits are described in [LUMEN.md](../../docs/LUMEN.md).

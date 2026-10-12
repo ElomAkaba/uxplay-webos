@@ -8,6 +8,7 @@ class Shell {
 public:
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
+    SDL_Texture *wallpaper_=nullptr;
     std::string title="UxPlay webOS";
     bool open();
     bool pump();

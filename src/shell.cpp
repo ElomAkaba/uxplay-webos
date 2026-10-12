@@ -8,6 +8,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <cmath>
 static std::string log_path;
 static volatile sig_atomic_t interrupted = 0;
 static void signal_stop(int) { interrupted = 1; }
@@ -51,6 +52,9 @@ bool Shell::open() {
     font_=TTF_OpenFont("/usr/share/fonts/LG_Display-Regular.ttf",30);
     large_=TTF_OpenFont("/usr/share/fonts/LG_Display-Regular.ttf",76);
     if(!font_||!large_) {fprintf(stderr,"[font] %s\n",TTF_GetError());return false;}
+    SDL_RenderSetLogicalSize(renderer,1920,1080);
+    SDL_Surface *background=SDL_LoadBMP((app_directory()+"/state/wallpaper.bmp").c_str());
+    if(background){wallpaper_=SDL_CreateTextureFromSurface(renderer,background);SDL_FreeSurface(background);}
     return true;
 }
 void Shell::transparent() {
@@ -80,16 +84,50 @@ void Shell::text(const std::string& s,int y,TTF_Font *font,SDL_Color color) {
     if(texture) {SDL_RenderCopy(renderer,texture,nullptr,&rect);SDL_DestroyTexture(texture);}
     SDL_FreeSurface(surface);
 }
+static void rounded_panel(SDL_Renderer *renderer,int x,int y,int w,int h,int radius,SDL_Color color) {
+    SDL_SetRenderDrawColor(renderer,color.r,color.g,color.b,color.a);
+    for(int row=0;row<h;++row){
+        int edge=0;
+        if(row<radius){double d=radius-row-0.5;edge=radius-int(std::sqrt(radius*radius-d*d));}
+        else if(row>=h-radius){double d=row-(h-radius)+0.5;edge=radius-int(std::sqrt(radius*radius-d*d));}
+        SDL_RenderDrawLine(renderer,x+edge,y+row,x+w-edge-1,y+row);
+    }
+}
 void Shell::screen(const std::string& status,const std::string& pin,int delay) {
-    SDL_SetRenderDrawColor(renderer,14,25,36,255);SDL_RenderClear(renderer);
-    int w,h;SDL_GetRendererOutputSize(renderer,&w,&h);
-    text(title,h/6,large_,{65,210,171,255});
-    text(status,h/2-60,font_,{238,242,246,255});
-    if(!pin.empty()) text(pin,h/2+10,large_,{255,255,255,255});
-    else text("Select "+title+" on your iPhone, iPad or Mac",h/2+20,font_,{178,194,207,255});
-    char sync[160];snprintf(sync,sizeof(sync),"◀ ▶  Audio delay: %+d ms  ·  Adjust before connecting",delay);
-    text(sync,h-135,font_,{145,167,185,255});
-    text("Same Wi-Fi network  ·  720p / 30 fps  ·  Back to exit",h-80,font_,{145,167,185,255});
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawColor(renderer,20,25,34,255);SDL_RenderClear(renderer);
+    if(wallpaper_)SDL_RenderCopy(renderer,wallpaper_,nullptr,nullptr);
+    SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer,0,0,0,95);SDL_Rect shade={0,0,1920,1080};SDL_RenderFillRect(renderer,&shade);
+    rounded_panel(renderer,430,170,1060,740,42,{185,194,208,90});
+    rounded_panel(renderer,432,172,1056,736,40,{23,29,40,232});
+    // AirPlay outline, using the same screen-and-triangle shape as the launcher.
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+    for(int i=0;i<4;++i){
+        SDL_RenderDrawLine(renderer,919+i,235+i,1001-i,235+i);
+        SDL_RenderDrawLine(renderer,919+i,235,919+i,286);
+        SDL_RenderDrawLine(renderer,1001-i,235,1001-i,286);
+        SDL_RenderDrawLine(renderer,919,286-i,938,286-i);
+        SDL_RenderDrawLine(renderer,982,286-i,1001,286-i);
+        SDL_RenderDrawLine(renderer,960,273-i,932-i,304+i);
+        SDL_RenderDrawLine(renderer,960,273-i,988+i,304+i);
+        SDL_RenderDrawLine(renderer,932,304+i,988,304+i);
+    }
+    text(title,330,large_,{255,255,255,255});
+    std::string message=status;
+    if(status=="Waiting for a connection")message="Klaar om te verbinden";
+    if(status=="Starting AirPlay receiver")message="AirPlay starten…";
+    text(message,465,font_,{238,242,246,255});
+    if(!pin.empty()) {
+        text("Vul deze code in op je apparaat",535,font_,{194,200,210,255});
+        text(pin,590,large_,{255,255,255,255});
+    } else {
+        text("Kies "+title+" op je iPhone, iPad of Mac",545,font_,{238,242,246,255});
+        text("Open AirPlay of Synchrone weergave om te beginnen",605,font_,{194,200,210,255});
+    }
+    char sync[160];snprintf(sync,sizeof(sync),"◀  ▶   Audiovertraging: %+d ms",delay);
+    text(sync,745,font_,{194,200,210,255});
+    text("Zelfde wifi-netwerk  ·  Druk op Terug voor het beginscherm",815,font_,{194,200,210,255});
     SDL_RenderPresent(renderer);
 }
-Shell::~Shell() {if(font_)TTF_CloseFont(font_);if(large_)TTF_CloseFont(large_);TTF_Quit();if(renderer) SDL_DestroyRenderer(renderer); if(window) SDL_DestroyWindow(window); SDL_Quit(); }
+Shell::~Shell() {if(wallpaper_)SDL_DestroyTexture(wallpaper_);if(font_)TTF_CloseFont(font_);if(large_)TTF_CloseFont(large_);TTF_Quit();if(renderer) SDL_DestroyRenderer(renderer); if(window) SDL_DestroyWindow(window); SDL_Quit(); }

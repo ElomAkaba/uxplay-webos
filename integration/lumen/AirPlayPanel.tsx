@@ -4,8 +4,8 @@ import {useKeys} from '../hooks/useKeys';
 import {useOkPress} from '../hooks/useOkPress';
 import {launchApp, appExists} from '../lib/launch';
 import {AIRPLAY_ID} from '../config/constants';
-interface Props {onClose:()=>void;}
-export function AirPlayPanel({onClose}:Props) {
+interface Props {onClose:()=>void; receiverName?:string;}
+export function AirPlayPanel({onClose,receiverName="Lumen TV"}:Props) {
     const [starting,setStarting]=useState(false);
     const [error,setError]=useState('');
     const start=()=>{
@@ -26,7 +26,7 @@ export function AirPlayPanel({onClose}:Props) {
             <p>Deel je scherm of speel een YouTube-video af op deze tv.</p>
             <div class="airplay-steps">
                 <div><span>1</span>Start AirPlay hieronder.</div>
-                <div><span>2</span>Kies <strong>Lumen TV</strong> op je iPhone, iPad of Mac.</div>
+                <div><span>2</span>Kies <strong>{receiverName}</strong> op je iPhone, iPad of Mac.</div>
                 <div><span>3</span>Vul de code in als je apparaat daarom vraagt.</div>
             </div>
             <p class="airplay-note">Na de sessie kom je terug op het beginscherm. Druk op Terug om AirPlay te verlaten.</p>

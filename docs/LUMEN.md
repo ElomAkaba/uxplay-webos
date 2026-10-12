@@ -50,3 +50,11 @@ Returning after an actual iPhone streaming session still requires acceptance
 testing. A system-driven exit, such as switching to a different app or powering
 off, does not request a return to the launcher. Configuration parsing and
 application-ID validation are included in `tools/test.sh`.
+
+## Receiver appearance
+
+The native waiting and pairing screens use a dark translucent panel, an AirPlay
+icon and Dutch connection instructions. To match your launcher wallpaper, put
+a 1920×1080 BMP image at `state/wallpaper.bmp`, readable by the app user.
+The wallpaper is optional; without it the screen uses a dark background.
+Personal artwork is not included in the source or receiver package.
