@@ -43,7 +43,7 @@ bool Shell::open() {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) { fprintf(stderr, "[SDL] %s\n",SDL_GetError()); return false; }
     SDL_DisplayMode mode;
     if (SDL_GetCurrentDisplayMode(0,&mode) != 0) return false;
-    window = SDL_CreateWindow("UxPlay webOS",0,0,mode.w,mode.h,SDL_WINDOW_FULLSCREEN);
+    window = SDL_CreateWindow(title.c_str(),0,0,mode.w,mode.h,SDL_WINDOW_FULLSCREEN);
     if (window) renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
     if (!renderer) { fprintf(stderr,"[SDL] %s\n",SDL_GetError()); return false; }
     fprintf(stderr,"[SDL] window %dx%d\n",mode.w,mode.h);
@@ -83,10 +83,10 @@ void Shell::text(const std::string& s,int y,TTF_Font *font,SDL_Color color) {
 void Shell::screen(const std::string& status,const std::string& pin,int delay) {
     SDL_SetRenderDrawColor(renderer,14,25,36,255);SDL_RenderClear(renderer);
     int w,h;SDL_GetRendererOutputSize(renderer,&w,&h);
-    text("UxPlay webOS",h/6,large_,{65,210,171,255});
+    text(title,h/6,large_,{65,210,171,255});
     text(status,h/2-60,font_,{238,242,246,255});
     if(!pin.empty()) text(pin,h/2+10,large_,{255,255,255,255});
-    else text("Open Screen Mirroring and select UxPlay webOS",h/2+20,font_,{178,194,207,255});
+    else text("Select "+title+" on your iPhone, iPad or Mac",h/2+20,font_,{178,194,207,255});
     char sync[160];snprintf(sync,sizeof(sync),"◀ ▶  Audio delay: %+d ms  ·  Adjust before connecting",delay);
     text(sync,h-135,font_,{145,167,185,255});
     text("Same Wi-Fi network  ·  720p / 30 fps  ·  Back to exit",h-80,font_,{145,167,185,255});

@@ -8,6 +8,7 @@ class Shell {
 public:
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
+    std::string title="UxPlay webOS";
     bool open();
     bool pump();
     Action action();

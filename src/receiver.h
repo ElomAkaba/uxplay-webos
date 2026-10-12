@@ -39,6 +39,7 @@ struct Receiver {
     std::mutex mutex;
     std::deque<Packet> packets;
     size_t bytes=0;
+    std::string display_name="UxPlay webOS";
     std::string directory, message="Waiting for a connection", pin_text, client;
     std::set<std::string> keys;
 };

@@ -1,6 +1,7 @@
 #include "audio.h"
 #include "h264.h"
 #include "media.h"
+#include "launcher.h"
 #include "receiver.h"
 #include "shell.h"
 #include <cstdio>
@@ -10,9 +11,14 @@
 
 int main() {
     umask(0077);start_log("uxplay.log");
-    Shell shell;if(!shell.open())return 1;
+    const LauncherIntegration launcher=read_launcher_integration(app_directory()+"/state/launcher.conf");
+    Shell shell;if(launcher.enabled())shell.title=launcher.receiver_name;
+    if(!shell.open())return 1;
     shell.screen("Starting AirPlay receiver","");
     Receiver receiver;
+    if(launcher.enabled())receiver.display_name=launcher.receiver_name;
+    bool had_session=false;
+    bool return_home=false;
     if(!receiver.start(app_directory()+"/state")) {
         shell.screen("Could not start. See uxplay.log","");
         while(shell.pump())SDL_Delay(50);
@@ -38,8 +44,11 @@ int main() {
     while(running) {
         int64_t now=now_ns();
         Action action=shell.action();
+        if(receiver.mirror || receiver.hls_requested || !receiver.pin().empty())had_session=true;
+        if(launcher.enabled() && had_session && !opened && !hls_open && !receiver.mirror && !receiver.hls_requested && receiver.pin().empty()){return_home=true;break;}
         if(action==Action::Exit)break;
         if(action==Action::Back) {
+            if(launcher.enabled()){return_home=true;break;}
             if(opened||receiver.mirror||!receiver.pin().empty())finish();else break;
         }
         if(!opened&&(action==Action::Left||action==Action::Right)) {
@@ -169,6 +178,7 @@ int main() {
         } else {finish();receiver.show("Stream failure. Connect again.");}
     }
     receiver.stop();media.close();
+    if(launcher.enabled() && return_home)launch_application(launcher.app_id);
     fprintf(stderr,"[app] stopped cleanly\n");
     return 0;
 }

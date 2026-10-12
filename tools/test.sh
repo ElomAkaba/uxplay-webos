@@ -25,3 +25,5 @@ build/tests/hls-playlist-test
 c++ -std=c++11 -g -fsanitize=address,undefined -Isrc tests/hls_bridge_driver.cpp src/hls_bridge.cpp -o build/tests/hls-bridge-test
 python3 tests/hls_bridge_test.py build/tests/hls-bridge-test
 python3 tests/companion_test.py
+c++ -std=c++11 -g -fsanitize=address,undefined -Isrc tests/launcher_test.cpp src/launcher.cpp -o build/tests/launcher-test
+build/tests/launcher-test

@@ -55,6 +55,12 @@ python3 tools/validate-metadata.py
 
 The corresponding source archive is `dist/uxplay-webos-0.1.0-source.tar.gz`; it includes this source tree, pinned UxPlay source, original dependency archives, and build instructions. Final packaging remains a local Apple Silicon task because of the current toolchain.
 
+## Launcher integration
+
+For an on-demand AirPlay action inside Lumen and a hidden native backend, see
+[launcher integration](docs/LUMEN.md). The combined bundle includes the launcher
+and backend IPKs. Standalone operation remains the default.
+
 ## Architecture
 
 `src/receiver.cpp` integrates the pinned UxPlay core and handles discovery, PIN pairing, and bounded packet queues. `src/main.cpp` owns session lifecycle and timing. `src/media.cpp` feeds the TV hardware decoder through Starfish Media Pipeline and ACB, while FFmpeg decodes AAC-ELD, AAC-LC, ALAC, and PCM to stereo PCM. SDL owns the window and remote input while the hardware video plane remains visible.

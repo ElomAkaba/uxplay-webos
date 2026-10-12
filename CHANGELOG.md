@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## Unreleased
 
+- Add optional launcher return behavior, configurable AirPlay naming and a hidden-backend bundle for Lumen.
+
 - Add experimental YouTube HLS playback through the native webOS player.
 - Restrict HLS variants to H.264 up to 720p and rewrite loopback playlist URLs.
 - Add an optional configurable FFmpeg companion for webOS 3 separate-audio streams.
