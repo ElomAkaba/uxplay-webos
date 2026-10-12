@@ -1,0 +1,8 @@
+{
+  "tv_host": "192.0.2.10",
+  "bind": "192.0.2.20",
+  "port": 8878,
+  "public_url": "http://192.0.2.20:8878",
+  "state_dir": "/var/lib/uxplay-hls",
+  "token_file": "/etc/uxplay-hls.token"
+}

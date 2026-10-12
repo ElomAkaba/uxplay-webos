@@ -1,0 +1,2 @@
+# Upstream patch context preserves whitespace from the pinned source.
+patches/*.patch -whitespace

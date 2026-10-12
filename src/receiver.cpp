@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 static Receiver& self(void *p) { return *static_cast<Receiver *>(p); }
 static void log_message(void *,int level,const char *text) {
@@ -53,7 +54,7 @@ bool Receiver::start(const std::string& dir) {
     FILE *m=fopen((directory+"/device.id").c_str(),"rb");
     bool existing=m && fread(mac,1,6,m)==6;if(m) fclose(m);
     if(!existing) {
-        if(RAND_bytes(mac,6)!=1) return false;
+        if(RAND_bytes(mac,6)!=1) { ERR_print_errors_fp(stderr); return false; }
         mac[0]=(mac[0]&0xfe)|2;
         m=fopen((directory+"/device.id").c_str(),"wb");
         if(!m) return false;
@@ -63,14 +64,31 @@ bool Receiver::start(const std::string& dir) {
     int err=0;
     dnssd=dnssd_init("UxPlay webOS",12,reinterpret_cast<char *>(mac),6,1,&err);
     if(!dnssd || err) { show("AirPlay discovery failed");return false; }
-    dnssd_set_airplay_features(dnssd,0,0);dnssd_set_airplay_features(dnssd,4,0);
+    dnssd_set_airplay_features(dnssd,0,1);dnssd_set_airplay_features(dnssd,4,1);
     dnssd_set_airplay_features(dnssd,42,0);dnssd_set_airplay_features(dnssd,27,1);
     raop_callbacks_t cb={};cb.cls=this;
+    cb.on_video_play=[](void *p,const char *url,float start) {
+        Receiver& r=self(p); std::lock_guard<std::mutex> l(r.mutex);
+        if(!url || strncmp(url,"http://localhost:",17)!=0) { fprintf(stderr,"[hls] rejected unexpected playback URL\n"); return; }
+        r.hls_url=url; r.hls_seek=start>0?start:-1; r.hls_stop=false; r.hls_active=true; r.hls_requested=true; r.paused=false;
+        fprintf(stderr,"[hls] playback requested\n");
+    };
+    cb.on_video_scrub=[](void *p,float pos){ if(std::isfinite(pos)&&pos>=0) self(p).hls_seek=pos; };
+    cb.on_video_rate=[](void *p,float rate){ self(p).paused=rate==0; };
+    cb.on_video_stop=[](void *p){ self(p).hls_stop=true; };
+    cb.on_video_playlist_remove=[](void *p)->float{ self(p).paused=true; return self(p).hls_position; };
+    cb.on_video_acquire_playback_info=[](void *p,playback_info_t *info){
+        Receiver& r=self(p); memset(info,0,sizeof(*info));
+        info->duration=r.hls_duration; info->position=r.hls_position;
+        info->seek_duration=r.hls_duration; info->rate=r.paused?0:1;
+        info->ready_to_play=r.hls_ready; info->playback_buffer_empty=!r.hls_ready;
+        info->playback_likely_to_keep_up=r.hls_ready;
+    };
     cb.audio_process=[](void *p,raop_ntp_t *,audio_decode_struct *d){self(p).enqueue(false,d->ct,d->ntp_time_remote,d->data,d->data_len);};
     cb.video_process=[](void *p,raop_ntp_t *,video_decode_struct *d){if(!d->is_h265)self(p).enqueue(true,0,d->ntp_time_remote,d->data,d->data_len);};
     cb.conn_feedback=[](void *p){self(p).activity=now_ns();};
     cb.conn_reset=[](void *p,int reason){fprintf(stderr,"[session] transport reset reason=%d\n",reason);self(p).reset=true;};
-    cb.video_reset=[](void *p,reset_type_t reason){fprintf(stderr,"[session] video reset reason=%d\n",int(reason));self(p).reset=true;};
+    cb.video_reset=[](void *p,reset_type_t reason){fprintf(stderr,"[session] video reset reason=%d\n",int(reason));if(!self(p).hls_active) self(p).reset=true;};
     cb.video_pause=[](void *p){self(p).paused=true;};
     cb.video_resume=[](void *p){self(p).paused=false;};
     cb.audio_flush=[](void *p){self(p).audio_flush=true;};
@@ -110,6 +128,10 @@ bool Receiver::start(const std::string& dir) {
     raop=raop_init(&cb);if(!raop) return false;
     raop_set_log_callback(raop,log_message,this);raop_set_log_level(raop,LOGGER_INFO);
     if(raop_init2(raop,0,device_id,(directory+"/server.key").c_str()))return false;
+    raop_set_plist(raop,"hls",1);
+    // HLS playlist language selection dereferences the system language.
+    // The standalone UxPlay executable sets it, but this embedded receiver must too.
+    raop_set_lang(raop,nullptr,nullptr,"en-US");
     raop_set_plist(raop,"width",1280);raop_set_plist(raop,"height",720);
     raop_set_plist(raop,"refreshRate",30);raop_set_plist(raop,"maxFPS",30);raop_set_plist(raop,"pin",0);
     raop_set_dnssd(raop,dnssd);

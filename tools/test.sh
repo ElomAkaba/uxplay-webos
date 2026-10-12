@@ -20,3 +20,8 @@ c++ -std=c++11 -g -fsanitize=address,undefined -Isrc $ffmpeg_cflags \
   tests/media_test.cpp src/h264.cpp src/audio.cpp \
   $ffmpeg_libs -o build/tests/media-test
 build/tests/media-test build/tests/landscape.h264 build/tests/portrait.h264 build/tests/audio.aac
+c++ -std=c++11 -g -fsanitize=address,undefined -Isrc tests/hls_playlist_test.cpp -o build/tests/hls-playlist-test
+build/tests/hls-playlist-test
+c++ -std=c++11 -g -fsanitize=address,undefined -Isrc tests/hls_bridge_driver.cpp src/hls_bridge.cpp -o build/tests/hls-bridge-test
+python3 tests/hls_bridge_test.py build/tests/hls-bridge-test
+python3 tests/companion_test.py

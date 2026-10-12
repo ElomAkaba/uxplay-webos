@@ -33,6 +33,7 @@ int main() {
         media.close();decoder.reset();receiver.disconnect();opened=false;have_pending=false;
         origin=0;start=0;stall=0;audio_end=0;configuration.clear();last_ui=0;last_paused=false;audio_started=false;
     };
+    bool hls_open=false, hls_paused=false; double hls_position=0; int64_t hls_tick=0;
     bool running=true;
     while(running) {
         int64_t now=now_ns();
@@ -43,6 +44,26 @@ int main() {
         }
         if(!opened&&(action==Action::Left||action==Action::Right)) {
             receiver.adjust_audio_delay(action==Action::Right?25:-25);last_ui=0;
+        }
+        if(receiver.hls_requested.exchange(false)) {
+            media.close(); opened=false; have_pending=false; receiver.clear(); receiver.reset=false;
+            std::string url; {std::lock_guard<std::mutex> l(receiver.mutex);url=receiver.hls_url;}
+            hls_open=media.open_url(app_id,url); hls_position=0; hls_tick=now; hls_paused=false;
+            receiver.hls_ready=false; receiver.hls_position=0;
+            if(hls_open) shell.transparent(); else {receiver.hls_active=false;receiver.show("YouTube playback failed. See log.");}
+        }
+        if(hls_open) {
+            media.tick();
+            bool paused=receiver.paused; if(paused!=hls_paused) {media.pause(paused);hls_paused=paused;}
+            double seek=media.ready?receiver.hls_seek.exchange(-1):-1; if(seek>=0) {media.seek(seek);hls_position=seek;}
+            if(media.playing && !paused) hls_position+=double(now-hls_tick)/1000000000.0;
+            hls_tick=now; receiver.hls_position=hls_position; receiver.hls_duration=media.duration.load(); receiver.hls_ready=media.ready.load();
+            if(action==Action::Back || receiver.hls_stop.exchange(false) || media.failed || media.ended) {
+                fprintf(stderr,"[hls] playback ended failed=%d\n",int(media.failed.load()));
+                media.close();hls_open=false;receiver.hls_active=false;receiver.hls_ready=false;
+                receiver.show("Waiting for a connection"); last_ui=0;
+            }
+            if(hls_open) {SDL_Delay(10);continue;}
         }
         if(receiver.reset.exchange(false))finish();
         if(receiver.activity && now-receiver.activity>20000000000LL && (opened||receiver.mirror)) {

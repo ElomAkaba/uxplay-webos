@@ -15,7 +15,7 @@ build_stamp="$(shasum -a 256 "$0" | cut -d ' ' -f 1)"
 previous_stamp="$(cat "$prefix/build-config.sha256" 2>/dev/null || true)"
 if [ "$build_stamp" != "$previous_stamp" ] || [ ! -f "$prefix/lib/libcrypto.a" ]; then
     (cd .cache/openssl-3.5.8
-     ./Configure linux-armv4 no-shared no-tests no-module no-async --prefix="$prefix" --libdir=lib
+     ./Configure linux-armv4 no-shared no-tests no-module no-async --with-rand-seed=devrandom --prefix="$prefix" --libdir=lib
      make -j6 build_libs
      make install_dev) >build/logs/openssl.log 2>&1
 fi

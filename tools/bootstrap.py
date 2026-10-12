@@ -13,6 +13,13 @@ LOCK = json.loads((ROOT / 'dependencies.lock.json').read_text())
 def run(*args, **kw):
     subprocess.run(args, check=True, **kw)
 
+def apply_webos_patch(target):
+    patch = ROOT / 'patches/uxplay-webos-hls.patch'
+    applied = subprocess.run(['git', '-C', str(target), 'apply', '--reverse', '--check', str(patch)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if applied.returncode:
+        run('git', '-C', str(target), 'apply', '--check', str(patch))
+        run('git', '-C', str(target), 'apply', str(patch))
+
 def main():
     CACHE.mkdir(exist_ok=True)
     for name, item in LOCK.items():
@@ -23,14 +30,20 @@ def main():
                 if not target.exists():
                     target.parent.mkdir(exist_ok=True)
                     run('tar', '-xf', str(embedded), '-C', str(target.parent))
+                apply_webos_patch(target)
                 continue
             if not (target / '.git').exists():
                 target.parent.mkdir(exist_ok=True)
                 run('git', 'clone', item['repository'], str(target))
+            patch = ROOT / 'patches/uxplay-webos-hls.patch'
             status = subprocess.check_output(['git', '-C', str(target), 'status', '--porcelain'], text=True)
             if status.strip():
-                sys.exit('UxPlay has local modifications; preserve them before bootstrapping.')
+                current = subprocess.check_output(['git', '-C', str(target), 'diff', '--binary'], text=True)
+                if current != patch.read_text() or any(line.startswith('??') for line in status.splitlines()):
+                    sys.exit('UxPlay has unrelated local modifications; preserve them before bootstrapping.')
+                run('git', '-C', str(target), 'apply', '--reverse', str(patch))
             run('git', '-C', str(target), 'checkout', '--detach', item['commit'])
+            apply_webos_patch(target)
             continue
         archive = CACHE / item['archive']
         if not archive.exists():

@@ -24,6 +24,9 @@ struct Receiver {
     void show(const std::string& text);
     std::string pin();
     void adjust_audio_delay(int delta_ms);
+    std::string hls_url;
+    std::atomic<bool> hls_requested{false}, hls_stop{false}, hls_active{false}, hls_ready{false};
+    std::atomic<double> hls_position{0}, hls_duration{0}, hls_seek{-1};
     std::atomic<int> audio_delay_ms{100};
     std::atomic<bool> reset{false}, audio_flush{false}, paused{false}, has_audio{false}, mirror{false};
     std::atomic<int> width{1280},height{720};

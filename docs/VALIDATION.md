@@ -56,3 +56,10 @@ Raw local evidence is under ignored `build/logs/`. `tools/soak.py --label ipad` 
 - Queue overflow, a >3-second player stall, or a large timestamp discontinuity produces a recoverable disconnect and an on-screen instruction to reconnect.
 - Paired devices are stored in the app folder; app reinstallation/data removal can reset them. The development atomic-update helper preserves them. Moving from the old development app ID to `com.github.danlflh.uxplaywebos` requires manual removal of the old build and starts a new pairing state.
 - Unsupported HLS, DRM content and HEVC/HDR are not acceptance targets.
+
+## Additional webOS 3 HLS work
+
+The YouTube HLS path has additional validation on an LG 55UH615V-ZB, firmware
+05.70.50, SDK 3.4.0. See [HLS validation and remaining work](HLS.md) for the
+observed video result, separate-audio workaround and unverified scenarios.
+This does not expand the stable mirroring acceptance claims above.

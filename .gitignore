@@ -11,3 +11,7 @@ paired.keys
 server.key
 device.id
 audio-delay-ms
+
+LOCAL-NOTES.txt
+hls-bridge.conf
+*.token

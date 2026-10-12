@@ -1,0 +1,46 @@
+diff --git a/lib/http_handlers.h b/lib/http_handlers.h
+index 8e06266..94560f2 100644
+--- a/lib/http_handlers.h
++++ b/lib/http_handlers.h
+@@ -18,6 +18,7 @@
+ 
+ #include "airplay_video.h"
+ #include "fcup_request.h"
++#include "hls_playlist.h"
+ 
+ static void
+ *hls_get_current_video(raop_t *raop) {
+@@ -905,6 +906,7 @@ static void
+ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *response,
+                  char **response_data, int *response_datalen) {
+     raop_t *raop = conn->raop;
++    logger_log(raop->logger, LOGGER_INFO,"[hls] native player requested playlist");
+     if (raop->current_video == -1) {
+         logger_log(raop->logger, LOGGER_ERR,"airplay_video playlist  not found");
+         http_response_init(response, "HTTP/1.1", 404, "Not Found");
+@@ -935,10 +937,13 @@ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *r
+                 printf("Memory allocation failed (data)\n");
+                 exit(1);
+             }
+-            memcpy(data, master_playlist, len);
+-            data[len] = '\0';
+-            *response_data = data;
+-            *response_datalen = (int ) len;
++            free(data);
++            data = webos_hls_master(master_playlist);
++            if (data) {
++                *response_data = data;
++                *response_datalen = (int) strlen(data);
++                logger_log(raop->logger, LOGGER_INFO,"[hls] serving H264 playlist capped at 720p");
++            }
+         } else {
+             logger_log(raop->logger, LOGGER_ERR,"requested master playlist %s not found", url); 
+         }
+@@ -963,6 +968,7 @@ http_handler_hls(raop_conn_t *conn,  http_request_t *request, http_response_t *r
+ 	    
+     }
+ 
++    if (*response_data && *response_datalen > 0) webos_hls_loopback(*response_data);
+     http_response_add_header(response, "Access-Control-Allow-Headers", "Content-type");
+     http_response_add_header(response, "Access-Control-Allow-Origin", "*");
+     const char *date = NULL;

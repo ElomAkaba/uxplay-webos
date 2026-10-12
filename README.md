@@ -69,9 +69,11 @@ Diagnostics are written to `uxplay.log`, rotated around 1 MiB with one previous 
 
 ## Supported features and limitations
 
+Experimental YouTube playback from the in-app AirPlay button is also available; see [HLS setup](docs/HLS.md). On webOS 3, separate video/audio tracks require the optional companion bridge.
+
 Supported: AirPlay discovery, PIN pairing, H.264 mirroring, stereo audio, iPad rotation, reconnecting, and adjustable audio delay.
 
-Not supported or not certified: DRM/HLS playback, HEVC/HDR, recording, startup at boot, broad TV/firmware compatibility, Mac extended display, and low-latency gaming. Starfish buffering on this older platform can add visible latency.
+Not supported or not certified: DRM playback, HEVC/HDR, recording, startup at boot, broad TV/firmware compatibility, Mac extended display, and low-latency gaming. Starfish buffering on this older platform can add visible latency.
 
 ## Troubleshooting
 

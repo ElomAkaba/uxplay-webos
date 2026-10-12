@@ -10,6 +10,9 @@ public:
     Media();
     ~Media();
     bool open(const char *app_id, int width, int height, bool audio, int sample_rate = 44100);
+    bool open_url(const char *app_id, const std::string& url);
+    void seek(double seconds);
+    std::atomic<double> duration{0};
     FeedResult feed(const void *data, size_t size, int64_t pts_ns, bool video);
     void tick();
     void eos();

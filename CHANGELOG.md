@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Add experimental YouTube HLS playback through the native webOS player.
+- Restrict HLS variants to H.264 up to 720p and rewrite loopback playlist URLs.
+- Add an optional configurable FFmpeg companion for webOS 3 separate-audio streams.
+- Fix OpenSSL random seeding in older app jails and initialize HLS language selection.
+- Apply pinned UxPlay compatibility changes during bootstrap and include them in source archives.
+
 ## [0.1.0] - 2026-09-07
 
 ### Added

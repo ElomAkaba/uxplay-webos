@@ -1,0 +1,15 @@
+[Unit]
+Description=UxPlay webOS HLS audio/video bridge
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=uxplay-hls
+ExecStart=/usr/bin/python3 /opt/uxplay-hls/server.py --config /etc/uxplay-hls.json
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/uxplay-hls
+[Install]
+WantedBy=multi-user.target
